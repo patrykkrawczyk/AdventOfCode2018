@@ -3,13 +3,12 @@ package pro.patrykkrawczyk.adventofcode2018;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 public class Day03A {
 
@@ -19,20 +18,16 @@ public class Day03A {
         try (Stream<String> stream = Files.lines(Paths.get(INPUT))) {
             AtomicInteger doubled = new AtomicInteger();
             int[][] fabric = new int[1000][1000];
-            Map<Point, Point> map = inputToMap(stream);
+            List<Claim> claims = parseInput(stream);
 
-            for (Entry<Point, Point> entry : map.entrySet()) {
-                Point area = entry.getValue();
-                int posX = entry.getKey().x;
-                int posY = entry.getKey().y;
-
-                IntStream.range(0, area.x).forEach(x -> {
-                    IntStream.range(0, area.y).forEach(y -> {
-                        if (fabric[posX + x][posY + y] == 1) {
+            for (Claim c : claims) {
+                IntStream.range(0, c.areaX).forEach(x -> {
+                    IntStream.range(0, c.areaY).forEach(y -> {
+                        if (fabric[c.posX + x][c.posY + y] == 1) {
                             doubled.incrementAndGet();
                         }
 
-                        ++fabric[posX + x][posY + y];
+                        ++fabric[c.posX + x][c.posY + y];
                     });
                 });
             }
@@ -41,31 +36,30 @@ public class Day03A {
         }
     }
 
-    private static Map<Point, Point> inputToMap(Stream<String> stream) {
-        final Function<String[], Point> positionMapper = a -> {
-            String[] pos = a[2].split(",");
-            return new Point(pos[0], pos[1].replace(":", ""));
-        };
-
-        final Function<String[], Point> areaMapper = a -> {
-            String[] area = a[3].split("x");
-            return new Point(area[0], area[1]);
-        };
-
-        return stream
-                .collect(Collectors.toList())
-                .stream()
-                .map(l -> l.split(" "))
-                .collect(Collectors.toMap(positionMapper, areaMapper));
+    private static List<Claim> parseInput(Stream<String> stream) {
+        return stream.map(Claim::new).collect(toList());
     }
 
-    private static final class Point {
-        private int x;
-        private int y;
+    private static final class Claim {
+        private String id;
+        private int posX;
+        private int posY;
+        private int areaX;
+        private int areaY;
 
-        private Point(String x, String y) {
-            this.x = Integer.parseInt(x);
-            this.y = Integer.parseInt(y);
+        private Claim(String line) {
+            String[] bySpaces = line.split(" ");
+
+            String[] pos = bySpaces[2].split(",");
+            pos[1] = pos[1].replace(":", "");
+
+            String[] area = bySpaces[3].split("x");
+
+            this.id = bySpaces[0].substring(1);
+            this.posX = Integer.parseInt(pos[0]);
+            this.posY = Integer.parseInt(pos[1]);
+            this.areaX = Integer.parseInt(area[0]);
+            this.areaY = Integer.parseInt(area[1]);
         }
     }
 }
